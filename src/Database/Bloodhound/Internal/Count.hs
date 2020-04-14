@@ -29,7 +29,6 @@ instance FromJSON CountResponse where
 
 data CountShards = CountShards { csTotal      :: Int
                                , csSuccessful :: Int
-                               , csSkipped    :: Int
                                , csFailed     :: Int
                                }
   deriving (Eq, Show)
@@ -41,5 +40,4 @@ instance FromJSON CountShards where
         CountShards
         <$> o .: "total"
         <*> o .: "successful"
-        <*> o .: "skipped"
         <*> o .: "failed"
