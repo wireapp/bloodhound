@@ -421,6 +421,19 @@ module Database.Bloodhound.Types
        , TokenChar(..)
        , Shingle(..)
        , Language(..)
+
+       , ReindexRequest(..)
+       , ReindexSource(..)
+       , ReindexDest(..)
+       , ReindexConflicts(..)
+       , ReindexScript(..)
+       , VersionType(..)
+       , ReindexOpType(..)
+       , ReindexResponse(..)
+
+       , TaskResponse(..)
+       , TaskNodeId(..)
+       , Task (..)
        ) where
 
 import           Bloodhound.Import
@@ -428,12 +441,14 @@ import           Bloodhound.Import
 import           Database.Bloodhound.Internal.Aggregation
 import           Database.Bloodhound.Internal.Analysis
 import           Database.Bloodhound.Internal.Client
-import Database.Bloodhound.Internal.Count
+import           Database.Bloodhound.Internal.Count
 import           Database.Bloodhound.Internal.Highlight
 import           Database.Bloodhound.Internal.Newtypes
 import           Database.Bloodhound.Internal.Query
+import           Database.Bloodhound.Internal.Reindex
 import           Database.Bloodhound.Internal.Sort
 import           Database.Bloodhound.Internal.Suggest
+import           Database.Bloodhound.Internal.Task
 
 {-| 'unpackId' is a silly convenience function that gets used once.
 -}

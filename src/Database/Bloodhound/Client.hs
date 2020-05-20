@@ -99,6 +99,11 @@ module Database.Bloodhound.Client
        , parseEsResponse
        -- * Count
        , countByIndex
+       -- * Reindex
+       , reindex
+       , reindexAsync
+       -- * Task
+       , getTask
        )
        where
 
@@ -1269,3 +1274,18 @@ countByIndex :: (MonadBH m, MonadThrow m) => IndexName -> CountQuery -> m (Eithe
 countByIndex (IndexName indexName) q = do
   url <- joinPath [indexName, "_count"]
   parseEsResponse =<< post url (Just (encode q))
+
+reindex :: (MonadBH m, MonadThrow m) => ReindexRequest -> m (Either EsError ReindexResponse)
+reindex req = do
+  url <- joinPath ["_reindex"]
+  parseEsResponse =<< post url (Just (encode req))
+
+reindexAsync :: (MonadBH m, MonadThrow m) => ReindexRequest -> m (Either EsError TaskNodeId)
+reindexAsync req = do
+  url <- addQuery [("wait_for_completion", Just "true")] <$> joinPath ["_reindex"]
+  parseEsResponse =<< post url (Just (encode req))
+
+getTask :: (MonadBH m, MonadThrow m, FromJSON a) => TaskNodeId -> m (Either EsError (TaskResponse a))
+getTask (TaskNodeId task) = do
+  url <- joinPath ["_tasks", task]
+  parseEsResponse =<< get url

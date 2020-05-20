@@ -7,7 +7,7 @@ packages:
 - completed:
     cabal-file:
       size: 2026
-      sha256: d340ae2f3fd0b54b2f899d482072be24f41eddac8ea081f11d9db260b14264c8
+      sha256: 6afc0d7cabe7848f38de15cfdeef61dd6fd217bb6d3b191793cb32992023a93c
     name: quickcheck-arbitrary-template
     version: 0.2.0.0
     git: https://github.com/bitemyapp/quickcheck-arbitrary-template.git
@@ -25,6 +25,27 @@ packages:
       sha256: 12264d8a89883b42e78c313792f8cba9af51c8fda915fce34e9780ff6972cf7e
   original:
     hackage: quickcheck-properties-0.1
+- completed:
+    hackage: deriving-aeson-0.2.5@sha256:a1efa4ab7ff94f73e6d2733a9d4414cb4c3526761295722cff28027b5b3da1a4,1277
+    pantry-tree:
+      size: 441
+      sha256: 8fa77245ed0f169fae3a337bf4b9114c44e6bd0cd02ce748998f46c19ef32277
+  original:
+    hackage: deriving-aeson-0.2.5@sha256:a1efa4ab7ff94f73e6d2733a9d4414cb4c3526761295722cff28027b5b3da1a4,1277
+- completed:
+    hackage: aeson-1.4.7.1@sha256:6d8d2fd959b7122a1df9389cf4eca30420a053d67289f92cdc0dbc0dab3530ba,7098
+    pantry-tree:
+      size: 40133
+      sha256: caa9306e519c601ab0170d113daa03c1163db53e5466be2968bbd61a771bebcb
+  original:
+    hackage: aeson-1.4.7.1@sha256:6d8d2fd959b7122a1df9389cf4eca30420a053d67289f92cdc0dbc0dab3530ba,7098
+- completed:
+    hackage: time-compat-1.9.3@sha256:a1a0a8b088be6a7be50c7c0bf156ce876151b1cbe14261736965e361c8073b2a,4349
+    pantry-tree:
+      size: 3654
+      sha256: 9bce314b9a677472b9cc051a6ed09f4a1555180a5e2702ad67d64d74c9b5ceed
+  original:
+    hackage: time-compat-1.9.3@sha256:a1a0a8b088be6a7be50c7c0bf156ce876151b1cbe14261736965e361c8073b2a,4349
 snapshots:
 - completed:
     size: 500539
