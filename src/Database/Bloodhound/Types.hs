@@ -430,6 +430,7 @@ module Database.Bloodhound.Types
        , VersionType(..)
        , ReindexOpType(..)
        , ReindexResponse(..)
+       , mkReindexRequest
 
        , TaskResponse(..)
        , TaskNodeId(..)
