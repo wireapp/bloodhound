@@ -33,6 +33,7 @@ import qualified Test.SourceFiltering as SourceFiltering
 import qualified Test.Suggest as Suggest
 import qualified Test.Templates as Templates
 import qualified Test.Count as Count
+import qualified Test.Reindex as Reindex
 
 main :: IO ()
 main = hspec $ do
@@ -50,6 +51,7 @@ main = hspec $ do
   Suggest.spec
   Templates.spec
   Count.spec
+  Reindex.spec
 
   describe "error parsing"  $ do
     it "can parse EsErrors for < 2.0" $ when' (atmost es16) $ withTestEnv $ do
