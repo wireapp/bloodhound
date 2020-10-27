@@ -8,7 +8,7 @@ packages:
 
 extra-deps:
   - git: https://github.com/wireapp/quickcheck-arbitrary-template.git
-    commit: e2ba386c6aff6cf1ea74bb2b08f9fe35795aefff
+    commit: 0346f7f1a9d9ec69b18563934efafa58ce3b9761
   - quickcheck-properties-0.1
 
 resolver: lts-16.7
