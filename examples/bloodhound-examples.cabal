@@ -1,0 +1,48 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 5dc1058a19dd84e5fa4ffe680225d0ff101408bf44d05f31a7d7b29421bf2443
+
+name:           bloodhound-examples
+version:        0.0.0.0
+category:       Web
+homepage:       https://github.com/bitemyapp/bloodhound#readme
+bug-reports:    https://github.com/bitemyapp/bloodhound/issues
+author:         Chris Allen
+maintainer:     cma@bitemyapp.com
+copyright:      2017, Chris Allen
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/bitemyapp/bloodhound
+
+flag werror
+  description: Treat warnings as errors
+  manual: True
+  default: False
+
+executable tweet-example
+  main-is: Tweet.hs
+  other-modules:
+      Paths_bloodhound_examples
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base
+    , bloodhound
+    , http-client
+    , semigroups
+    , text
+    , time
+    , vector
+  if flag(werror)
+    ghc-options: -Werror
+  default-language: Haskell2010
