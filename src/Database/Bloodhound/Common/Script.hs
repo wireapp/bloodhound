@@ -5,15 +5,14 @@ module Database.Bloodhound.Common.Script where
 
 import Bloodhound.Import
 
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.KeyMap as KeyMap
 
 import           Database.Bloodhound.Internal.Newtypes
 
 newtype ScriptFields =
-  ScriptFields (HM.HashMap ScriptFieldName ScriptFieldValue)
+  ScriptFields (KeyMap.KeyMap ScriptFieldValue)
   deriving (Eq, Show)
 
-type ScriptFieldName = Text
 type ScriptFieldValue = Value
 
 data Script =
@@ -33,10 +32,9 @@ newtype ScriptId =
   ScriptId Text deriving (Eq, Show, FromJSON, ToJSON)
 
 newtype ScriptParams =
-  ScriptParams (HM.HashMap ScriptParamName ScriptParamValue)
+  ScriptParams (KeyMap.KeyMap ScriptParamValue)
   deriving (Eq, Show)
 
-type ScriptParamName = Text
 type ScriptParamValue = Value
 
 data BoostMode =
@@ -128,7 +126,7 @@ instance FromJSON ScoreMode where
           parse "min"      = pure ScoreModeMin
           parse sm         = fail ("Unexpected ScoreMode: " <> show sm)
 
-functionScoreFunctionPair :: FunctionScoreFunction -> (Text, Value)
+functionScoreFunctionPair :: FunctionScoreFunction -> (Key, Value)
 functionScoreFunctionPair (FunctionScoreFunctionScript functionScoreScript) =
   ("script_score", toJSON functionScoreScript)
 functionScoreFunctionPair (FunctionScoreFunctionRandom seed) =

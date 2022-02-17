@@ -113,10 +113,12 @@ import           Control.Monad
 import           Control.Monad.Catch
 import           Control.Monad.IO.Class
 import           Data.Aeson
+import qualified Data.Aeson.Key               as Key
+import qualified Data.Aeson.KeyMap            as KeyMap
 import           Data.ByteString.Lazy.Builder
 import qualified Data.ByteString.Lazy.Char8   as L
 import           Data.Foldable                (toList)
-import qualified Data.HashMap.Strict          as HM
+import           Data.Functor.Identity        (runIdentity)
 import           Data.Ix
 import qualified Data.List                    as LS (filter, foldl')
 import           Data.List.NonEmpty           (NonEmpty (..))
@@ -326,10 +328,10 @@ newtype GSRs = GSRs { unGSRs :: [GenericSnapshotRepo] }
 instance FromJSON GSRs where
   parseJSON = withObject "Collection of GenericSnapshotRepo" parse
     where
-      parse = fmap GSRs . mapM (uncurry go) . HM.toList
+      parse = fmap GSRs . mapM (uncurry go) . KeyMap.toList
       go rawName = withObject "GenericSnapshotRepo" $ \o ->
-        GenericSnapshotRepo (SnapshotRepoName rawName) <$> o .: "type"
-                                                       <*> o .: "settings"
+        GenericSnapshotRepo (SnapshotRepoName (Key.toText rawName)) <$> o .: "type"
+                                                                    <*> o .: "settings"
 
 
 -- | Create or update a snapshot repo
@@ -539,7 +541,7 @@ createIndexWith updates shards (IndexName indexName) =
   where url = joinPath [indexName]
         body = encode $ object
           ["settings" .= deepMerge
-            ( HM.singleton "index.number_of_shards" (toJSON shards) :
+            ( KeyMap.singleton "index.number_of_shards" (toJSON shards) :
               [u | Object u <- toJSON <$> updates]
             )
           ]
@@ -624,11 +626,15 @@ forceMergeIndex ixs ForceMergeIndexSettings {..} =
 
 deepMerge :: [Object] -> Object
 deepMerge = LS.foldl' go mempty
-  where go acc = LS.foldl' go' acc . HM.toList
-        go' acc (k, v) = HM.insertWith merge k v acc
+  where go acc = LS.foldl' go' acc . KeyMap.toList
+        go' acc (k, v) = insertWith merge k v acc
         merge (Object a) (Object b) = Object (deepMerge [a, b])
         merge _ b = b
 
+insertWith :: (a -> a -> a) -> Key -> a -> KeyMap.KeyMap a -> KeyMap.KeyMap a
+insertWith f k new m = runIdentity $ KeyMap.alterF merge k m
+  where merge Nothing = pure $ Just new
+        merge (Just old) = pure . Just $ f old new
 
 statusCodeIs :: (Int, Int) -> Reply -> Bool
 statusCodeIs r resp = inRange r $ NHTS.statusCode (responseStatus resp)
@@ -730,7 +736,7 @@ listIndices =
       forM vals $ \val ->
         case val of
           Object obj ->
-            case HM.lookup "index" obj of
+            case KeyMap.lookup "index" obj of
               (Just (String txt)) -> Right (IndexName txt)
               v -> Left $ "indexVal in listIndices failed on non-string, was: " <> show v
           v -> Left $ "One of the values parsed in listIndices wasn't an object, it was: " <> show v
@@ -746,7 +752,7 @@ catIndices =
       forM vals $ \val ->
         case val of
           Object obj ->
-            case (HM.lookup "index" obj, HM.lookup "docs.count" obj) of
+            case (KeyMap.lookup "index" obj, KeyMap.lookup "docs.count" obj) of
               (Just (String txt), Just (String docs)) -> Right ((IndexName txt), read (T.unpack docs))
               v -> Left $ "indexVal in catIndices failed on non-string, was: " <> show v
           v -> Left $ "One of the values parsed in catIndices wasn't an object, it was: " <> show v
@@ -936,20 +942,20 @@ mash = V.foldl' (\b x -> b <> byteString "\n" <> lazyByteString x)
 
 mkBulkStreamValue :: Text -> Text -> Text -> Text -> Value
 mkBulkStreamValue operation indexName mappingName docId =
-  object [operation .=
+  object [Key.fromText operation .=
           object [ "_index" .= indexName
                  , "_type"  .= mappingName
                  , "_id"    .= docId]]
 
 mkBulkStreamValueAuto :: Text -> Text -> Text -> Value
 mkBulkStreamValueAuto operation indexName mappingName =
-  object [operation .=
+  object [Key.fromText operation .=
           object [ "_index" .= indexName
                  , "_type"  .= mappingName]]
 
 mkBulkStreamValueWithMeta :: [UpsertActionMetadata] -> Text -> Text -> Text -> Text -> Value
 mkBulkStreamValueWithMeta meta operation indexName mappingName docId =
-  object [ operation .=
+  object [ Key.fromText operation .=
           object ([ "_index" .= indexName
                   , "_type"  .= mappingName
                   , "_id"    .= docId]

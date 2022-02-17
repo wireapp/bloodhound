@@ -5,7 +5,7 @@ module Test.Script where
 import Test.Common
 import Test.Import
 
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.Map as M
 
 spec :: Spec
@@ -21,7 +21,7 @@ spec =
             Nothing
             Nothing
           sf = ScriptFields $
-            HM.fromList [("test1", sfv)]
+            KeyMap.fromList [("test1", sfv)]
           search' = mkSearch (Just query) Nothing
           search = search' { scriptFields = Just sf }
       resp <- searchByIndex testIndex search

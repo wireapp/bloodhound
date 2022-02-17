@@ -9,7 +9,7 @@ import           Database.Bloodhound
 
 import           Test.Import
 
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.List as L
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
@@ -121,14 +121,14 @@ instance Arbitrary a => Arbitrary (NonEmpty a) where
 instance Arbitrary ScriptFields where
   arbitrary =
     pure $ ScriptFields $
-      HM.fromList []
+      KeyMap.fromList []
 
   shrink = const []
 
 instance Arbitrary ScriptParams where
   arbitrary =
     pure $ ScriptParams $
-      HM.fromList [ ("a", Number 42)
+      KeyMap.fromList [ ("a", Number 42)
                   , ("b", String "forty two")
                   ]
 
@@ -229,8 +229,8 @@ instance Arbitrary VersionNumber where
       posInt = getPositive <$> arbitrary
 
 instance Arbitrary TemplateQueryKeyValuePairs where
-  arbitrary = TemplateQueryKeyValuePairs . HM.fromList <$> arbitrary
-  shrink (TemplateQueryKeyValuePairs x) = map (TemplateQueryKeyValuePairs . HM.fromList) . shrink $ HM.toList x
+  arbitrary = TemplateQueryKeyValuePairs . KeyMap.fromList <$> arbitrary
+  shrink (TemplateQueryKeyValuePairs x) = map (TemplateQueryKeyValuePairs . KeyMap.fromList) . shrink $ KeyMap.toList x
 
 makeArbitrary ''IndexName
 instance Arbitrary IndexName where arbitrary = arbitraryIndexName

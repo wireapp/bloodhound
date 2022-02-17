@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1de39ef9a563120158d6f7d01bad7b1476f24e2d28ff22e0fa4b27d9a49d6f0b
+-- hash: 439bc6460cbcd32bc5f5e7408feea4d4a95e327ce8001825524fa160069e24f9
 
 name:           bloodhound
 version:        0.17.0.0
@@ -53,7 +53,7 @@ library
       src
   ghc-options: -Wall
   build-depends:
-      aeson >=0.11.1
+      aeson >=2
     , base >=4.3 && <5
     , blaze-builder
     , bytestring >=0.10.0
@@ -104,7 +104,7 @@ test-suite bloodhound-tests
   ghc-options: -Wall -fno-warn-orphans
   build-depends:
       QuickCheck
-    , aeson >=0.11.1
+    , aeson >=2
     , base
     , blaze-builder
     , bloodhound

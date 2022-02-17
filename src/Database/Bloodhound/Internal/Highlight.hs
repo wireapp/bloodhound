@@ -5,6 +5,7 @@ module Database.Bloodhound.Internal.Highlight where
 
 import           Bloodhound.Import
 
+import qualified Data.Aeson.Key  as Key
 import qualified Data.Map.Strict as M
 
 import           Database.Bloodhound.Internal.Newtypes
@@ -29,9 +30,9 @@ data FieldHighlight =
 
 instance ToJSON FieldHighlight where
     toJSON (FieldHighlight (FieldName fName) (Just fSettings)) =
-        object [ fName .= fSettings ]
+        object [ Key.fromText fName .= fSettings ]
     toJSON (FieldHighlight (FieldName fName) Nothing) =
-        object [ fName .= emptyObject ]
+        object [ Key.fromText fName .= emptyObject ]
 
 data HighlightSettings =
     Plain PlainHighlight

@@ -5,6 +5,17 @@
 
 packages:
 - completed:
+    name: quickcheck-arbitrary-template
+    version: 0.2.0.0
+    git: https://github.com/wireapp/quickcheck-arbitrary-template.git
+    pantry-tree:
+      size: 935
+      sha256: 0d4a1e2deac2c9bcb15f16fc81861fb51e7fddf99ec906442bb758a59a8a559a
+    commit: 0346f7f1a9d9ec69b18563934efafa58ce3b9761
+  original:
+    git: https://github.com/wireapp/quickcheck-arbitrary-template.git
+    commit: 0346f7f1a9d9ec69b18563934efafa58ce3b9761
+- completed:
     hackage: quickcheck-properties-0.1@sha256:3bd0890e84ec4cf1c1e6e475152c2c0d7c85915a051cf4e8bf9ec70c32df735c,1268
     pantry-tree:
       size: 550

@@ -15,7 +15,8 @@ import           Bloodhound.Import
 import           Control.Monad.Fail                         (MonadFail)
 #endif
 #endif
-import qualified Data.HashMap.Strict                        as HM
+import qualified Data.Aeson.Key                             as Key
+import qualified Data.Aeson.KeyMap                          as KeyMap
 import qualified Data.SemVer                                as SemVer
 import qualified Data.Text                                  as T
 import qualified Data.Traversable                           as DT
@@ -249,17 +250,17 @@ data UpdatableIndexSetting = NumberOfReplicas ReplicaCount
                            deriving (Eq, Show)
 
 attrFilterJSON :: NonEmpty NodeAttrFilter -> Value
-attrFilterJSON fs = object [ n .= T.intercalate "," (toList vs)
+attrFilterJSON fs = object [ Key.fromText n .= T.intercalate "," (toList vs)
                            | NodeAttrFilter (NodeAttrName n) vs <- toList fs]
 
 parseAttrFilter :: Value -> Parser (NonEmpty NodeAttrFilter)
 parseAttrFilter = withObject "NonEmpty NodeAttrFilter" parse
-  where parse o = case HM.toList o of
+  where parse o = case KeyMap.toList o of
                     []   -> fail "Expected non-empty list of NodeAttrFilters"
                     x:xs -> DT.mapM (uncurry parse') (x :| xs)
         parse' n = withText "Text" $ \t ->
           case T.splitOn "," t of
-            fv:fvs -> return (NodeAttrFilter (NodeAttrName n) (fv :| fvs))
+            fv:fvs -> return (NodeAttrFilter (NodeAttrName (Key.toText n)) (fv :| fvs))
             []     -> fail "Expected non-empty list of filter values"
 
 instance ToJSON UpdatableIndexSetting where
@@ -516,17 +517,17 @@ parseSettings :: Object -> Parser [UpdatableIndexSetting]
 parseSettings o = do
   o' <- o .: "index"
   -- slice the index object into singleton hashmaps and try to parse each
-  parses <- forM (HM.toList o') $ \(k, v) -> do
+  parses <- forM (KeyMap.toList o') $ \(k, v) -> do
     -- blocks are now nested into the "index" key, which is not how they're serialized
-    let atRoot = Object (HM.singleton k v)
-    let atIndex = Object (HM.singleton "index" atRoot)
+    let atRoot = Object (KeyMap.singleton k v)
+    let atIndex = Object (KeyMap.singleton "index" atRoot)
     optional (parseJSON atRoot <|> parseJSON atIndex)
   return (catMaybes parses)
 
 instance FromJSON IndexSettingsSummary where
   parseJSON = withObject "IndexSettingsSummary" parse
-    where parse o = case HM.toList o of
-                      [(ixn, v@(Object o'))] -> IndexSettingsSummary (IndexName ixn)
+    where parse o = case KeyMap.toList o of
+                      [(ixn, v@(Object o'))] -> IndexSettingsSummary (IndexName (Key.toText ixn))
                                                 <$> parseJSON v
                                                 <*> (fmap (filter (not . redundant)) . parseSettings =<< o' .: "settings")
                       _ -> fail "Expected single-key object with index name"
@@ -575,7 +576,7 @@ instance ToJSON IndexTemplate where
             ])
     (toJSON s)
    where
-     merge (Object o1) (Object o2) = toJSON $ HM.union o1 o2
+     merge (Object o1) (Object o2) = toJSON $ KeyMap.union o1 o2
      merge o           Null        = o
      merge _           _           = undefined
 
@@ -774,11 +775,11 @@ newtype IndexAliasesSummary =
 
 instance FromJSON IndexAliasesSummary where
   parseJSON = withObject "IndexAliasesSummary" parse
-    where parse o = IndexAliasesSummary . mconcat <$> mapM (uncurry go) (HM.toList o)
+    where parse o = IndexAliasesSummary . mconcat <$> mapM (uncurry go) (KeyMap.toList o)
           go ixn = withObject "index aliases" $ \ia -> do
                      aliases <- ia .:? "aliases" .!= mempty
-                     forM (HM.toList aliases) $ \(aName, v) -> do
-                       let indexAlias = IndexAlias (IndexName ixn) (IndexAliasName (IndexName aName))
+                     forM (KeyMap.toList aliases) $ \(aName, v) -> do
+                       let indexAlias = IndexAlias (IndexName (Key.toText ixn)) (IndexAliasName (IndexName (Key.toText aName)))
                        IndexAliasSummary indexAlias <$> parseJSON v
 
 
@@ -796,7 +797,7 @@ instance ToJSON IndexAlias where
 
 instance ToJSON IndexAliasCreate where
   toJSON IndexAliasCreate {..} = Object (filterObj <> routingObj)
-    where filterObj = maybe mempty (HM.singleton "filter" . toJSON) aliasCreateFilter
+    where filterObj = maybe mempty (KeyMap.singleton "filter" . toJSON) aliasCreateFilter
           Object routingObj = maybe (Object mempty) toJSON aliasCreateRouting
 
 instance ToJSON AliasRouting where
@@ -1036,9 +1037,9 @@ instance FromJSON SnapshotVerification where
     where
       parse o = do
         o2 <- o .: "nodes"
-        SnapshotVerification <$> mapM (uncurry parse') (HM.toList o2)
+        SnapshotVerification <$> mapM (uncurry parse') (KeyMap.toList o2)
       parse' rawFullId = withObject "SnapshotNodeVerification" $ \o ->
-        SnapshotNodeVerification (FullNodeId rawFullId) <$> o .: "name"
+        SnapshotNodeVerification (FullNodeId (Key.toText rawFullId)) <$> o .: "name"
 
 
 -- | A node that has verified a snapshot
@@ -1855,9 +1856,9 @@ instance FromJSON NodesInfo where
     where
       parse o = do
         nodes <- o .: "nodes"
-        infos <- forM (HM.toList nodes) $ \(fullNID, v) -> do
+        infos <- forM (KeyMap.toList nodes) $ \(fullNID, v) -> do
           node <- parseJSON v
-          parseNodeInfo (FullNodeId fullNID) node
+          parseNodeInfo (FullNodeId (Key.toText fullNID)) node
         cn <- o .: "cluster_name"
         return (NodesInfo infos cn)
 
@@ -1866,9 +1867,9 @@ instance FromJSON NodesStats where
     where
       parse o = do
         nodes <- o .: "nodes"
-        stats <- forM (HM.toList nodes) $ \(fullNID, v) -> do
+        stats <- forM (KeyMap.toList nodes) $ \(fullNID, v) -> do
           node <- parseJSON v
-          parseNodeStats (FullNodeId fullNID) node
+          parseNodeStats (FullNodeId (Key.toText fullNID)) node
         cn <- o .: "cluster_name"
         return (NodesStats stats cn)
 
@@ -2404,7 +2405,7 @@ instance FromJSON NodeTransportInfo where
     where
       parse o = NodeTransportInfo <$> (maybe (return mempty) parseProfiles =<< o .:? "profiles")
                                   <*> parseJSON (Object o)
-      parseProfiles (Object o)  | HM.null o = return []
+      parseProfiles (Object o)  | KeyMap.null o = return []
       parseProfiles v@(Array _) = parseJSON v
       parseProfiles Null        = return []
       parseProfiles _           = fail "Could not parse profiles"

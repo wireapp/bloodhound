@@ -6,6 +6,8 @@ module Database.Bloodhound.Internal.Sort where
 
 import           Bloodhound.Import
 
+import qualified Data.Aeson.Key as Key
+
 import           Database.Bloodhound.Internal.Newtypes
 import           Database.Bloodhound.Internal.Query
 
@@ -51,7 +53,7 @@ instance ToJSON SortSpec where
   toJSON (DefaultSortSpec
           (DefaultSort (FieldName dsSortFieldName) dsSortOrder dsIgnoreUnmapped
            dsSortMode dsMissingSort dsNestedFilter)) =
-    object [dsSortFieldName .= omitNulls base] where
+    object [Key.fromText dsSortFieldName .= omitNulls base] where
       base = [ "order" .= dsSortOrder
              , "unmapped_type" .= dsIgnoreUnmapped
              , "mode" .= dsSortMode
@@ -60,7 +62,7 @@ instance ToJSON SortSpec where
 
   toJSON (GeoDistanceSortSpec gdsSortOrder (GeoPoint (FieldName field) gdsLatLon) units) =
     object [ "unit" .= units
-           , field .= gdsLatLon
+           , Key.fromText field .= gdsLatLon
            , "order" .= gdsSortOrder ]
 
 {-| 'DefaultSort' is usually the kind of 'SortSpec' you'll want. There's a

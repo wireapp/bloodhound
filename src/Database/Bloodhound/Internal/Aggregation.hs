@@ -7,7 +7,8 @@ module Database.Bloodhound.Internal.Aggregation where
 import           Bloodhound.Import
 
 import qualified Data.Aeson as Aeson
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -244,7 +245,7 @@ data TermOrder = TermOrder
 
 instance ToJSON TermOrder where
   toJSON (TermOrder termSortField termSortOrder) =
-    object [termSortField .= termSortOrder]
+    object [Key.fromText termSortField .= termSortOrder]
 
 data CollectionMode = BreadthFirst
                     | DepthFirst deriving (Eq, Show)
@@ -403,10 +404,10 @@ toAggResult t a = M.lookup t a >>= deserialize
 -- field name. We filter out the known keys to try to minimize the noise.
 getNamedSubAgg :: Object -> [Text] -> Maybe AggregationResults
 getNamedSubAgg o knownKeys = maggRes
-  where unknownKeys = HM.filterWithKey (\k _ -> k `notElem` knownKeys) o
+  where unknownKeys = KeyMap.filterWithKey (\k _ -> Key.toText k `notElem` knownKeys) o
         maggRes
-          | HM.null unknownKeys = Nothing
-          | otherwise           = Just . M.fromList $ HM.toList unknownKeys
+          | KeyMap.null unknownKeys = Nothing
+          | otherwise               = Just . M.mapKeys Key.toText . M.fromList $ KeyMap.toList unknownKeys
 
 data MissingResult = MissingResult
   { missingDocCount :: Int

@@ -5,7 +5,7 @@ module Test.Query where
 import Test.Common
 import Test.Import
 
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.KeyMap as KeyMap
 
 spec :: Spec
 spec =
@@ -113,7 +113,7 @@ spec =
       let innerQuery = QueryMatchQuery $
                          mkMatchQuery (FieldName "{{userKey}}")
                                       (QueryString "{{bitemyappKey}}")
-          templateParams = TemplateQueryKeyValuePairs $ HM.fromList
+          templateParams = TemplateQueryKeyValuePairs $ KeyMap.fromList
                             [ ("userKey", "user")
                             , ("bitemyappKey", "bitemyapp")
                             ]

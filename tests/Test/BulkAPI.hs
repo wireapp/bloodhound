@@ -8,7 +8,7 @@ import           Data.Functor        ((<&>))
 import           Test.Common
 import           Test.Import
 
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.KeyMap   as KeyMap
 import qualified Data.Vector         as V
 import qualified Lens.Micro.Aeson    as LMA
 
@@ -87,7 +87,7 @@ spec =
                     { scriptLanguage = Just $ ScriptLanguage "painless"
                     , scriptInline = Just $ ScriptInline "ctx._source.counter += params.count"
                     , scriptStored = Nothing
-                    , scriptParams = Just $ ScriptParams $ HM.fromList [("count", Number 2)]
+                    , scriptParams = Just $ ScriptParams $ KeyMap.fromList [("count", Number 2)]
                     }
 
       upsertDocs (UpsertScript False script) batch
@@ -102,7 +102,7 @@ spec =
                     { scriptLanguage = Just $ ScriptLanguage "painless"
                     , scriptInline = Just $ ScriptInline "ctx._source.counter += params.count"
                     , scriptStored = Nothing
-                    , scriptParams = Just $ ScriptParams $ HM.fromList [("count", Number 2)]
+                    , scriptParams = Just $ ScriptParams $ KeyMap.fromList [("count", Number 2)]
                     }
 
       -- Without "script_upsert" flag new documents are simply inserted and are not handled by the script
@@ -118,7 +118,7 @@ spec =
                     { scriptLanguage = Just $ ScriptLanguage "painless"
                     , scriptInline = Just $ ScriptInline "ctx._source.counter += params.count"
                     , scriptStored = Nothing
-                    , scriptParams = Just $ ScriptParams $ HM.fromList [("count", Number 2)]
+                    , scriptParams = Just $ ScriptParams $ KeyMap.fromList [("count", Number 2)]
                     }
 
       -- Without "script_upsert" flag new documents are simply inserted and are not handled by the script
