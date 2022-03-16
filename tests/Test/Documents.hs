@@ -49,3 +49,28 @@ spec =
       _ <- refreshIndex testIndex
       exists <- documentExists testIndex (MappingName "child") parent (DocId "2")
       liftIO $ exists `shouldBe` True
+
+    it "updates documents by query" $ withTestEnv $ do
+      _ <- insertData
+      _ <- insertOther
+      _ <- insertExtra
+      let query = (TermQuery (Term "user" "bitemyapp") Nothing)
+          script =
+            Script
+            (Just (ScriptLanguage "painless"))
+            (Just (ScriptInline "ctx._source.age *= 2"))
+            Nothing
+            Nothing
+      _ <- updateByQuery testIndex query (Just script)
+      _ <- refreshIndex testIndex
+      let search = mkSearch (Just query) Nothing
+      parsed <- searchTweets search
+      liftIO $ print parsed
+      case parsed of
+        Left e ->
+          liftIO $ expectationFailure ("Expected tweets as search result but got: " <> show e)
+        Right sr -> do
+          let results =
+                map (fmap age . hitSource) (hits (searchHits sr))
+          liftIO $
+            results `shouldBe` [Just $ age exampleTweet * 2, Just $ age tweetWithExtra * 2]
