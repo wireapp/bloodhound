@@ -116,7 +116,7 @@ import           Control.Monad.IO.Class
 import           Data.Aeson
 import qualified Data.Aeson.Key               as Key
 import qualified Data.Aeson.KeyMap            as KeyMap
-import           Data.ByteString.Lazy.Builder
+import           Data.ByteString.Builder
 import qualified Data.ByteString.Lazy.Char8   as L
 import           Data.Foldable                (toList)
 import           Data.Functor.Identity        (runIdentity)
@@ -894,7 +894,7 @@ updateByQuery (IndexName indexName) q mScript =
         scriptObject = case toJSON mScript of
           Null -> mempty
           Object o -> o
-          json -> "script"  .= json
+          j -> "script"  .= j
 
 -- | 'deleteDocument' is the primary way to delete a single document.
 --

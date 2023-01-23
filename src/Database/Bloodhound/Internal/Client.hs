@@ -5,16 +5,12 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE UndecidableInstances       #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 module Database.Bloodhound.Internal.Client where
 
 import           Bloodhound.Import
 
-#if defined(MIN_VERSION_GLASGOW_HASKELL)
-#if MIN_VERSION_GLASGOW_HASKELL(8,6,0,0)
-import           Control.Monad.Fail                         (MonadFail)
-#endif
-#endif
 import qualified Data.Aeson.Key                             as Key
 import qualified Data.Aeson.KeyMap                          as KeyMap
 import qualified Data.SemVer                                as SemVer

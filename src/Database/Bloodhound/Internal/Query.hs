@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RecordWildCards            #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 module Database.Bloodhound.Internal.Query
   ( module X
