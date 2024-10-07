@@ -822,6 +822,9 @@ deleteTemplate :: MonadBH m => TemplateName -> m Reply
 deleteTemplate (TemplateName templateName) =
   delete =<< joinPath ["_template", templateName]
 
+include_type_name_param :: (Text, Maybe Text)
+include_type_name_param = ("include_type_name", Just "true")
+
 -- | 'putMapping' is an HTTP PUT and has upsert semantics. Mappings are schemas
 -- for documents in indexes.
 --
@@ -833,7 +836,8 @@ putMapping :: (MonadBH m, ToJSON a) => IndexName
                  -> MappingName -> a -> m Reply
 putMapping (IndexName indexName) (MappingName mappingName) mapping =
   bindM2 put url (return body)
-  where url = joinPath [indexName, "_mapping", mappingName]
+  where url = addQuery params <$> joinPath [indexName, "_mapping", mappingName]
+        params = [include_type_name_param]
         -- "_mapping" and mappingName above were originally transposed
         -- erroneously. The correct API call is: "/INDEX/_mapping/MAPPING_NAME"
         body = Just $ encode mapping
@@ -872,7 +876,7 @@ indexDocument (IndexName indexName)
         parentParams = case idsParent cfg of
           Nothing -> []
           Just (DocumentParent (DocId p)) -> [ ("parent", Just p) ]
-        params = versionCtlParams cfg ++ parentParams
+        params = include_type_name_param : versionCtlParams cfg ++ parentParams
         body = Just (encode document)
 
 -- | 'updateDocument' provides a way to perform an partial update of a
@@ -882,7 +886,7 @@ updateDocument :: (ToJSON patch, MonadBH m) => IndexName -> MappingName
 updateDocument (IndexName indexName)
   (MappingName mappingName) cfg patch (DocId docId) =
   bindM2 post url (return body)
-  where url = addQuery (versionCtlParams cfg) <$>
+  where url = addQuery (include_type_name_param : versionCtlParams cfg) <$>
               joinPath [indexName, mappingName, docId, "_update"]
         body = Just (encode $ object ["doc" .= toJSON patch])
 
@@ -903,7 +907,7 @@ deleteDocument :: MonadBH m => IndexName -> MappingName
                   -> DocId -> m Reply
 deleteDocument (IndexName indexName)
   (MappingName mappingName) (DocId docId) =
-  delete =<< joinPath [indexName, mappingName, docId]
+  delete . addQuery [include_type_name_param] =<< joinPath [indexName, mappingName, docId]
 
 -- | 'deleteByQuery' performs a deletion on every document that matches a query.
 --
@@ -913,7 +917,7 @@ deleteByQuery :: MonadBH m => IndexName -> MappingName -> Query -> m Reply
 deleteByQuery (IndexName indexName) (MappingName mappingName) query =
   bindM2 post url (return body)
   where
-    url = joinPath [indexName, mappingName, "_delete_by_query"]
+    url = addQuery [include_type_name_param] <$> joinPath [indexName, mappingName, "_delete_by_query"]
     body = Just (encode $ object [ "query" .= query ])
 
 -- | 'bulk' uses
@@ -1050,7 +1054,7 @@ getDocument :: MonadBH m => IndexName -> MappingName
                -> DocId -> m Reply
 getDocument (IndexName indexName)
   (MappingName mappingName) (DocId docId) =
-  get =<< joinPath [indexName, mappingName, docId]
+  get . addQuery [include_type_name_param] =<< joinPath [indexName, mappingName, docId]
 
 -- | 'documentExists' enables you to check if a document exists. Returns 'Bool'
 --   in IO
@@ -1062,7 +1066,7 @@ documentExists (IndexName indexName) (MappingName mappingName)
                parent (DocId docId) = do
   (_, exists) <- existentialQuery =<< url
   return exists
-  where url = addQuery params <$> joinPath [indexName, mappingName, docId]
+  where url = addQuery (include_type_name_param : params) <$> joinPath [indexName, mappingName, docId]
         parentParam = fmap (\(DocumentParent (DocId p)) -> p) parent
         params = LS.filter (\(_, v) -> isJust v) [("parent", parentParam)]
 
@@ -1109,7 +1113,7 @@ searchByType :: MonadBH m => IndexName -> MappingName -> Search
                 -> m Reply
 searchByType (IndexName indexName)
   (MappingName mappingName) = bindM2 dispatchSearch url . return
-  where url = joinPath [indexName, mappingName, "_search"]
+  where url = addQuery [include_type_name_param] <$> joinPath [indexName, mappingName, "_search"]
 
 -- | For a given search, request a scroll for efficient streaming of
 -- search results. Note that the search is put into 'SearchTypeScan'
@@ -1122,7 +1126,7 @@ getInitialScroll ::
                                            m (Either EsError (SearchResult a))
 getInitialScroll (IndexName indexName) (MappingName mappingName) search' = do
     let url = addQuery params <$> joinPath [indexName, mappingName, "_search"]
-        params = [("scroll", Just "1m")]
+        params = [("scroll", Just "1m"), include_type_name_param]
         sorting = Just [DefaultSortSpec $ mkSort (FieldName "_doc") Descending]
         search = search' { sortBody = sorting }
     resp' <- bindM2 dispatchSearch url (return search)
@@ -1139,7 +1143,7 @@ getInitialSortedScroll ::
                                            m (Either EsError (SearchResult a))
 getInitialSortedScroll (IndexName indexName) (MappingName mappingName) search = do
     let url = addQuery params <$> joinPath [indexName, mappingName, "_search"]
-        params = [("scroll", Just "1m")]
+        params = [("scroll", Just "1m"), include_type_name_param]
     resp' <- bindM2 dispatchSearch url (return search)
     parseEsResponse resp'
 
