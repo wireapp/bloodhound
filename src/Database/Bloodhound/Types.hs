@@ -110,6 +110,7 @@ module Database.Bloodhound.Types
        , SearchResult(..)
        , ScrollId(..)
        , SearchHits(..)
+       , SearchHitsTotal(..)
        , TrackSortScores
        , From(..)
        , Size(..)

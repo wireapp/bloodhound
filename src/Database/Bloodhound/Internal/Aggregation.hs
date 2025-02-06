@@ -1,6 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE LambdaCase                 #-}
+
 
 module Database.Bloodhound.Internal.Aggregation where
 
@@ -11,6 +13,7 @@ import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import qualified Data.Scientific as Scientific
 
 import           Database.Bloodhound.Internal.Client
 import           Database.Bloodhound.Internal.Highlight (HitHighlight)
@@ -426,8 +429,38 @@ instance (FromJSON a) => FromJSON (TopHitResult a) where
                          v .: "hits"
   parseJSON _          = fail "Failure in FromJSON (TopHitResult a)"
 
+data SearchHitsTotalRel = SearchHitsTotalEq | SearchHitsTotalGte
+  deriving (Show, Eq)
+
+instance FromJSON SearchHitsTotalRel where
+  parseJSON = Aeson.withText "SearchHitsTotalRel" $ \case
+    "eq" -> pure SearchHitsTotalEq
+    "gte" -> pure SearchHitsTotalGte
+    x -> fail $ "Invalid SearchHitsTotalRel: " <> show x
+
+data SearchHitsTotal = SearchHitsTotal { hitsTotalValue :: Int
+                                       , hitsTotalRelation :: SearchHitsTotalRel } deriving (Show, Eq)
+
+instance FromJSON SearchHitsTotal where
+  parseJSON (Object v) = SearchHitsTotal <$> v .: "value" <*> v .: "relation"
+  parseJSON (Number n) =
+    case Scientific.toBoundedInteger n of
+      Just i -> pure $ SearchHitsTotal i SearchHitsTotalEq
+      Nothing -> fail $ "Invalid SearchHitsTotal value: " <> show n
+  parseJSON _ = fail "Expected SearchHitsTotal to be a number or object"
+
+instance Semigroup SearchHitsTotal where
+  (SearchHitsTotal na SearchHitsTotalEq) <> (SearchHitsTotal nb SearchHitsTotalEq) =
+    SearchHitsTotal (na + nb) SearchHitsTotalEq
+  (SearchHitsTotal na _) <> (SearchHitsTotal nb _) =
+    SearchHitsTotal (na + nb) SearchHitsTotalGte
+
+instance Monoid SearchHitsTotal where
+  mempty = SearchHitsTotal 0 SearchHitsTotalEq
+  mappend = (<>)
+
 data SearchHits a =
-  SearchHits { hitsTotal :: Int
+  SearchHits { hitsTotal :: SearchHitsTotal
              , maxScore  :: Score
              , hits      :: [Hit a] } deriving (Eq, Show)
 
@@ -441,10 +474,10 @@ instance (FromJSON a) => FromJSON (SearchHits a) where
 
 instance Semigroup (SearchHits a) where
   (SearchHits ta ma ha) <> (SearchHits tb mb hb) =
-    SearchHits (ta + tb) (max ma mb) (ha <> hb)
+    SearchHits (ta <> tb) (max ma mb) (ha <> hb)
 
 instance Monoid (SearchHits a) where
-  mempty = SearchHits 0 Nothing mempty
+  mempty = SearchHits (SearchHitsTotal 0 SearchHitsTotalEq) Nothing mempty
   mappend = (<>)
 
 type SearchAfterKey = [Aeson.Value]
