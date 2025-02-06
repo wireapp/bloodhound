@@ -46,6 +46,7 @@ module Database.Bloodhound.Client
        , templateExists
        , deleteTemplate
        -- ** Mapping
+       , putNamedMapping
        , putMapping
        -- ** Documents
        , indexDocument
@@ -829,11 +830,26 @@ deleteTemplate (TemplateName templateName) =
 -- >>> resp <- runBH' $ putMapping testIndex testMapping TweetMapping
 -- >>> print resp
 -- Response {responseStatus = Status {statusCode = 200, statusMessage = "OK"}, responseVersion = HTTP/1.1, responseHeaders = [("content-type","application/json; charset=UTF-8"),("content-encoding","gzip"),("transfer-encoding","chunked")], responseBody = "{\"acknowledged\":true}", responseCookieJar = CJ {expose = []}, responseClose' = ResponseClose}
-putMapping :: (MonadBH m, ToJSON a) => IndexName
+putNamedMapping :: (MonadBH m, ToJSON a) => IndexName
                  -> MappingName -> a -> m Reply
-putMapping (IndexName indexName) (MappingName mappingName) mapping =
+putNamedMapping (IndexName indexName) (MappingName mappingName) mapping =
   bindM2 put url (return body)
-  where url = joinPath [indexName, "_mapping", mappingName]
+  where url = addQuery [("include_type_name", Just "true")] <$> joinPath [indexName, "_mapping", mappingName]
+        -- "_mapping" and mappingName above were originally transposed
+        -- erroneously. The correct API call is: "/INDEX/_mapping/MAPPING_NAME"
+        body = Just $ encode mapping
+
+-- | 'putMapping' is an HTTP PUT and has upsert semantics. Mappings are schemas
+-- for documents in indexes.
+--
+-- >>> _ <- runBH' $ createIndex defaultIndexSettings testIndex
+-- >>> resp <- runBH' $ putMapping testIndex testMapping TweetMapping
+-- >>> print resp
+-- Response {responseStatus = Status {statusCode = 200, statusMessage = "OK"}, responseVersion = HTTP/1.1, responseHeaders = [("content-type","application/json; charset=UTF-8"),("content-encoding","gzip"),("transfer-encoding","chunked")], responseBody = "{\"acknowledged\":true}", responseCookieJar = CJ {expose = []}, responseClose' = ResponseClose}
+putMapping :: (MonadBH m, ToJSON a) => IndexName -> a -> m Reply
+putMapping (IndexName indexName) mapping =
+  bindM2 put url (return body)
+  where url = joinPath [indexName, "_mapping"]
         -- "_mapping" and mappingName above were originally transposed
         -- erroneously. The correct API call is: "/INDEX/_mapping/MAPPING_NAME"
         body = Just $ encode mapping
