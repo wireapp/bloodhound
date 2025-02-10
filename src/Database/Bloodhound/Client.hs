@@ -849,7 +849,7 @@ putNamedMapping (IndexName indexName) (MappingName mappingName) mapping =
 putMapping :: (MonadBH m, ToJSON a) => IndexName -> a -> m Reply
 putMapping (IndexName indexName) mapping =
   bindM2 put url (return body)
-  where url = joinPath [indexName, "_mapping"]
+  where url = addQuery [("include_type_name", Just "false")] <$> joinPath [indexName, "_mapping"]
         -- "_mapping" and mappingName above were originally transposed
         -- erroneously. The correct API call is: "/INDEX/_mapping/MAPPING_NAME"
         body = Just $ encode mapping
